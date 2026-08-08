@@ -1,4 +1,4 @@
-name: Tests
+name: Run OCI Bot
 
 on:
   workflow_dispatch:
@@ -6,43 +6,35 @@ on:
     - cron: '*/5 * * * *'
 
 jobs:
-  tests:
+  run-bot:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php-versions: ['8.3']
-    name: integration-tests (PHP ${{ matrix.php-versions }})
     steps:
       - uses: actions/checkout@v4
+
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: |
-          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-      - uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-
+          php-version: '8.3'
 
       - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Create Private Key File
         run: |
-          composer update --prefer-dist --no-progress
-      - name: Run test suite
-        run: |
-          vendor/bin/phpunit --color tests/
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > /tmp/oracle_key.pem
+          chmod 600 /tmp/oracle_key.pem
+
+      - name: Run OCI Instance Creation Script
+        run: php index.php
         env:
           OCI_REGION: ${{ secrets.OCI_REGION }}
           OCI_USER_ID: ${{ secrets.OCI_USER_OCID }}
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_PRIVATE_KEY_FILENAME: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_PRIVATE_KEY_FILENAME: /tmp/oracle_key.pem
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+          OCI_OCPUS: 4
+          OCI_MEMORY_IN_GBS: 24
+          OCI_SHAPE: VM.Standard.A1.Flex
+          OCI_MAX_INSTANCES: 1

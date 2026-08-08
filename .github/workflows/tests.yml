@@ -33,6 +33,7 @@ jobs:
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
           OCI_PRIVATE_KEY_FILENAME: /tmp/oracle_key.pem
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}
+          OCI_IMAGE_ID: ocid1.image.oc1.eu-frankfurt-1.aaaaaaaau32lbb2sdrgpxsivv3esw52oepvxq6ef625a5hhml6247cchftka
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
           OCI_OCPUS: 4
           OCI_MEMORY_IN_GBS: 24

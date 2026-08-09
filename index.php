@@ -72,70 +72,6 @@ echo "Bot will keep trying until successful.\n\n";
 
 while (true) {
 
-    echo "========================================\n";
-    echo "NEW ROUND\n";
-    echo "========================================\n";
-
-    /*
-     * Check if an instance already exists.
-     */
-    try {
-
-        $instances = $api->getInstances($config);
-
-        $existingInstances = $api->checkExistingInstances(
-            $config,
-            $instances,
-            $shape,
-            $maxRunningInstancesOfThatShape
-        );
-
-        if ($existingInstances) {
-            echo "$existingInstances\n";
-            echo "Instance already exists. Stopping.\n";
-            return;
-        }
-
-    } catch (\Throwable $e) {
-
-        echo "Could not check existing instances:\n";
-        echo $e->getMessage() . "\n";
-    }
-
-    /*
-     * Get Availability Domains.
-     */
-    try {
-
-        if (!empty($config->availabilityDomains)) {
-
-            if (is_array($config->availabilityDomains)) {
-                $availabilityDomains = $config->availabilityDomains;
-            } else {
-                $availabilityDomains = [
-                    $config->availabilityDomains
-                ];
-            }
-
-        } else {
-            $availabilityDomains = $api->getAvailabilityDomains($config);
-        }
-
-    } catch (\Throwable $e) {
-
-        echo "Could not get Availability Domains:\n";
-        echo $e->getMessage() . "\n";
-        echo "Waiting 30 seconds...\n";
-
-        sleep(30);
-        continue;
-    }
-
-    /*
-     * Try every Availability Domain.
-     */
-    while (true) {
-
     echo "\n=== NOWA RUNDA ===\n";
 
     $instances = $api->getInstances($config);
@@ -190,12 +126,16 @@ while (true) {
                 strpos($message, 'InternalError') !== false &&
                 strpos($message, 'Out of host capacity') !== false
             ) {
+
                 echo "Brak capacity. Następny AD...\n";
+
                 sleep(16);
+
                 continue;
             }
 
             echo "Inny błąd OCI. Kończę.\n";
+
             return;
         }
 
@@ -218,5 +158,7 @@ while (true) {
     echo "Brak capacity.\n";
     echo "Czekam 30 sekund i próbuję ponownie.\n";
 
+    sleep(30);
+}
     sleep(30);
 }

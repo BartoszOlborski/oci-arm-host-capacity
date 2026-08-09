@@ -23,9 +23,9 @@ jobs:
         env:
           PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.oci
-          echo "$PRIVATE_KEY" > ~/.oci/oci_api_key.pem
-          chmod 600 ~/.oci/oci_api_key.pem
+          echo "$PRIVATE_KEY" > key.pem
+          chmod 600 key.pem
+          ls -la key.pem
 
       - name: Run OCI Diagnostics
         run: php debug.php
@@ -35,5 +35,5 @@ jobs:
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_COMPARTMENT_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_PRIVATE_KEY_FILENAME: /home/runner/.oci/oci_api_key.pem
+          OCI_PRIVATE_KEY_FILENAME: key.pem
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}

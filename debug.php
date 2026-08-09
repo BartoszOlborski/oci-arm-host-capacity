@@ -7,13 +7,14 @@ use Hitrov\OciApi;
 $imageId = 'ocid1.image.oc1.eu-frankfurt-1.aaaaaaaau32lbb2sdrgpxsivv3esw52oepvxq6ef625a5hhml6247cchftka';
 
 try {
+    // Oficjalna kolejność Hitrov\OciConfig:
+    // 1: region, 2: userId, 3: keyFingerprint, 4: privateKeyFilename, 5: tenancyId, 6: subnetId, 7: imageId, 8: availabilityDomain (opcjonalne)
     $config = new OciConfig(
+        getenv('OCI_REGION'),
         getenv('OCI_USER_ID'),
         getenv('OCI_KEY_FINGERPRINT'),
         getenv('OCI_PRIVATE_KEY_FILENAME'),
         getenv('OCI_TENANCY_ID'),
-        getenv('OCI_REGION'),
-        getenv('OCI_TENANCY_ID'), // compartmentId
         getenv('OCI_SUBNET_ID'),
         $imageId
     );
@@ -35,7 +36,9 @@ try {
 
 echo "\n=== TEST 2: Sprawdzanie podsieci (Subnet) ===\n";
 try {
-    $response = $api->call($config, 'GET', "https://iaas.{$config->getRegion()}.oraclecloud.com/20160918/subnets/" . urlencode($config->getSubnetId()));
+    $subnetId = getenv('OCI_SUBNET_ID');
+    $region = getenv('OCI_REGION');
+    $response = $api->call($config, 'GET', "https://iaas.{$region}.oraclecloud.com/20160918/subnets/" . urlencode($subnetId));
     echo "SUKCES! Podsieć istnieje i odpowiedziała poprawnie.\n";
 } catch (\Throwable $e) {
     echo "BŁĄD W TEST 2: " . $e->getMessage() . "\n";

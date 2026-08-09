@@ -4,6 +4,8 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Hitrov\OciConfig;
 use Hitrov\OciApi;
 
+$imageId = 'ocid1.image.oc1.eu-frankfurt-1.aaaaaaaau32lbb2sdrgpxsivv3esw52oepvxq6ef625a5hhml6247cchftka';
+
 try {
     $config = new OciConfig(
         getenv('OCI_USER_ID'),
@@ -12,7 +14,8 @@ try {
         getenv('OCI_TENANCY_ID'),
         getenv('OCI_REGION'),
         getenv('OCI_TENANCY_ID'), // compartmentId
-        getenv('OCI_SUBNET_ID')
+        getenv('OCI_SUBNET_ID'),
+        $imageId
     );
 } catch (\Throwable $e) {
     echo "BŁĄD TWORZENIA KONFIGURACJI: " . $e->getMessage() . "\n";

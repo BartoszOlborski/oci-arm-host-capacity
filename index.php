@@ -134,15 +134,41 @@ while (true) {
     /*
      * Try every Availability Domain.
      */
+    while (true) {
+
+    echo "\n=== NOWA RUNDA ===\n";
+
+    $instances = $api->getInstances($config);
+
+    $existingInstances = $api->checkExistingInstances(
+        $config,
+        $instances,
+        $shape,
+        $maxRunningInstancesOfThatShape
+    );
+
+    if ($existingInstances) {
+        echo "$existingInstances\n";
+        return;
+    }
+
+    if (!empty($config->availabilityDomains)) {
+        if (is_array($config->availabilityDomains)) {
+            $availabilityDomains = $config->availabilityDomains;
+        } else {
+            $availabilityDomains = [$config->availabilityDomains];
+        }
+    } else {
+        $availabilityDomains = $api->getAvailabilityDomains($config);
+    }
+
     foreach ($availabilityDomains as $availabilityDomainEntity) {
 
         $availabilityDomain = is_array($availabilityDomainEntity)
             ? $availabilityDomainEntity['name']
             : $availabilityDomainEntity;
 
-        echo "\n";
-        echo "Trying Availability Domain:\n";
-        echo $availabilityDomain . "\n";
+        echo "Próba: {$availabilityDomain}\n";
 
         try {
 
@@ -157,48 +183,29 @@ while (true) {
 
             $message = $e->getMessage();
 
-            echo $message . "\n";
+            echo "$message\n";
 
-            /*
-             * No host capacity.
-             * Try the next Availability Domain.
-             */
             if (
                 $e->getCode() === 500 &&
                 strpos($message, 'InternalError') !== false &&
                 strpos($message, 'Out of host capacity') !== false
             ) {
-
-                echo "No capacity in ";
-                echo $availabilityDomain;
-                echo ". Trying next AD...\n";
-
+                echo "Brak capacity. Następny AD...\n";
                 sleep(16);
-
                 continue;
             }
 
-            /*
-             * Some other OCI error.
-             */
-            echo "Unexpected OCI error. Stopping.\n";
-
+            echo "Inny błąd OCI. Kończę.\n";
             return;
         }
 
-        /*
-         * Instance successfully created.
-         */
         $message = json_encode(
             $instanceDetails,
             JSON_PRETTY_PRINT
         );
 
-        echo "\n";
-        echo "========================================\n";
-        echo "SUCCESS - INSTANCE CREATED\n";
-        echo "========================================\n";
-        echo $message . "\n";
+        echo "=== SUKCES ===\n";
+        echo "$message\n";
 
         if ($notifier->isSupported()) {
             $notifier->notify($message);
@@ -207,15 +214,9 @@ while (true) {
         return;
     }
 
-    /*
-     * All Availability Domains were checked.
-     * Start another round.
-     */
-    echo "\n";
-    echo "All Availability Domains checked.\n";
-    echo "No host capacity available.\n";
-    echo "Waiting 30 seconds before next round...\n\n";
+    echo "\nWszystkie AD sprawdzone.\n";
+    echo "Brak capacity.\n";
+    echo "Czekam 30 sekund i próbuję ponownie.\n";
 
     sleep(30);
 }
-```

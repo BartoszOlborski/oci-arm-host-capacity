@@ -21,13 +21,15 @@ jobs:
 
       - name: Create Private Key File
         run: |
-          echo "${{ secrets.OCI_PRIVATE_KEY }}" > /tmp/oracle_key.pem
+          cat << 'EOF' > /tmp/oracle_key.pem
+          ${{ secrets.OCI_PRIVATE_KEY }}
+          EOF
           chmod 600 /tmp/oracle_key.pem
 
       - name: Run OCI Instance Creation Script
         run: php index.php
         env:
-          OCI_REGION: ${{ secrets.OCI_REGION }}
+          OCI_REGION: eu-frankfurt-1
           OCI_USER_ID: ${{ secrets.OCI_USER_OCID }}
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
@@ -39,3 +41,4 @@ jobs:
           OCI_MEMORY_IN_GBS: 24
           OCI_SHAPE: VM.Standard.A1.Flex
           OCI_MAX_INSTANCES: 1
+          OCI_AVAILABILITY_DOMAIN: EU-FRANKFURT-1-AD-1

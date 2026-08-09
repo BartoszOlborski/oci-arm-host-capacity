@@ -21,12 +21,15 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Create Private Key File
+      - name: Create OCI Private Key
         env:
-          PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
-          printf '%s\n' "$PRIVATE_KEY" > key.pem
-          chmod 600 key.pem
+          printf '%s\n' "$OCI_PRIVATE_KEY" > "$GITHUB_WORKSPACE/key.pem"
+          chmod 600 "$GITHUB_WORKSPACE/key.pem"
+
+          echo "Private key file created:"
+          ls -l "$GITHUB_WORKSPACE/key.pem"
 
       - name: Run OCI Diagnostics
         run: php debug.php
@@ -36,5 +39,5 @@ jobs:
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
           OCI_COMPARTMENT_ID: ${{ secrets.OCI_COMPARTMENT_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_PRIVATE_KEY_FILENAME: key.pem
+          OCI_PRIVATE_KEY_FILENAME: ${{ github.workspace }}/key.pem
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}

@@ -37,8 +37,7 @@ jobs:
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}
           OCI_IMAGE_ID: ocid1.image.oc1.eu-frankfurt-1.aaaaaaaau32lbb2sdrgpxsivv3esw52oepvxq6ef625a5hhml6247cchftka
           OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
-          OCI_OCPUS: 4
-          OCI_MEMORY_IN_GBS: 24
+          OCI_OCPUS: "2"
+          OCI_MEMORY_IN_GBS: "12"
           OCI_SHAPE: VM.Standard.A1.Flex
-          OCI_MAX_INSTANCES: 1
-          OCI_AVAILABILITY_DOMAIN: EU-FRANKFURT-1-AD-1
+          OCI_MAX_INSTANCES: "1"

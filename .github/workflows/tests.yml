@@ -1,4 +1,4 @@
-name: Run OCI Bot
+name: OCI ARM Bot
 
 on:
   workflow_dispatch:
@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -21,23 +21,35 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Create OCI Private Key
+      - name: Create OCI private key
         env:
           OCI_PRIVATE_KEY: ${{ secrets.OCI_PRIVATE_KEY }}
         run: |
           printf '%s\n' "$OCI_PRIVATE_KEY" > "$GITHUB_WORKSPACE/key.pem"
           chmod 600 "$GITHUB_WORKSPACE/key.pem"
 
-          echo "Private key file created:"
-          ls -l "$GITHUB_WORKSPACE/key.pem"
-
-      - name: Run OCI Diagnostics
-        run: php debug.php
+      - name: Run OCI ARM Bot
+        run: php index.php
         env:
           OCI_REGION: eu-frankfurt-1
+
           OCI_USER_ID: ${{ secrets.OCI_USER_OCID }}
           OCI_TENANCY_ID: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_COMPARTMENT_ID: ${{ secrets.OCI_COMPARTMENT_OCID }}
           OCI_KEY_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+
           OCI_PRIVATE_KEY_FILENAME: ${{ github.workspace }}/key.pem
+
           OCI_SUBNET_ID: ${{ secrets.OCI_SUBNET_OCID }}
+          OCI_IMAGE_ID: ${{ secrets.OCI_IMAGE_OCID }}
+
+          OCI_SSH_PUBLIC_KEY: ${{ secrets.OCI_SSH_PUBLIC_KEY }}
+
+          OCI_OCPUS: '4'
+          OCI_MEMORY_IN_GBS: '24'
+          OCI_SHAPE: VM.Standard.A1.Flex
+          OCI_MAX_INSTANCES: '1'
+
+          OCI_AVAILABILITY_DOMAIN: ''
+
+          CACHE_AVAILABILITY_DOMAINS: '1'
+          TOO_MANY_REQUESTS_TIME_WAIT: '600'

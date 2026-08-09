@@ -1,5 +1,5 @@
 <?php
-declare(strict\_types=1);
+declare(strict_types=1);
 
 
 // useful when script is being executed by cron user
@@ -15,30 +15,30 @@ use Hitrov\OciConfig;
 use Hitrov\TooManyRequestsWaiter;
 
 $envFilename = empty($argv[1]) ? '.env' : $argv[1];
-$dotenv = Dotenv::createUnsafeImmutable(\_\_DIR\_\_, $envFilename);
+$dotenv = Dotenv::createUnsafeImmutable(__DIR__, $envFilename);
 $dotenv->safeLoad();
 
-/\*
- \* No need to modify any value in this file anymore!
- \* Copy .env.example to .env and adjust there instead.
- \*
- \* README.md now has all the information.
- \*/
+/*
+ * No need to modify any value in this file anymore!
+ * Copy .env.example to .env and adjust there instead.
+ *
+ * README.md now has all the information.
+ */
 $config = new OciConfig(
-    getenv('OCI\_REGION'),
-    getenv('OCI\_USER\_ID'),
-    getenv('OCI\_TENANCY\_ID'),
-    getenv('OCI\_KEY\_FINGERPRINT'),
-    getenv('OCI\_PRIVATE\_KEY\_FILENAME'),
-    getenv('OCI\_AVAILABILITY\_DOMAIN') ?: null, // null or '' or 'jYtI\:PHX-AD-1' or ['jYtI\:PHX-AD-1','jYtI\:PHX-AD-2']
-    getenv('OCI\_SUBNET\_ID'),
-    getenv('OCI\_IMAGE\_ID'),
-    (int) getenv('OCI\_OCPUS'),
-    (int) getenv('OCI\_MEMORY\_IN\_GBS')
+    getenv('OCI_REGION'),
+    getenv('OCI_USER_ID'),
+    getenv('OCI_TENANCY_ID'),
+    getenv('OCI_KEY_FINGERPRINT'),
+    getenv('OCI_PRIVATE_KEY_FILENAME'),
+    getenv('OCI_AVAILABILITY_DOMAIN') ?: null, // null or '' or 'jYtI:PHX-AD-1' or ['jYtI:PHX-AD-1','jYtI:PHX-AD-2']
+    getenv('OCI_SUBNET_ID'),
+    getenv('OCI_IMAGE_ID'),
+    (int) getenv('OCI_OCPUS'),
+    (int) getenv('OCI_MEMORY_IN_GBS')
 );
 
-$bootVolumeSizeInGBs = (string) getenv('OCI\_BOOT\_VOLUME\_SIZE\_IN\_GBS');
-$bootVolumeId = (string) getenv('OCI\_BOOT\_VOLUME\_ID');
+$bootVolumeSizeInGBs = (string) getenv('OCI_BOOT_VOLUME_SIZE_IN_GBS');
+$bootVolumeId = (string) getenv('OCI_BOOT_VOLUME_ID');
 if ($bootVolumeSizeInGBs) {
     $config->setBootVolumeSizeInGBs($bootVolumeSizeInGBs);
 } elseif ($bootVolumeId) {
@@ -46,29 +46,29 @@ if ($bootVolumeSizeInGBs) {
 }
 
 $api = new OciApi();
-if (getenv('CACHE\_AVAILABILITY\_DOMAINS')) {
+if (getenv('CACHE_AVAILABILITY_DOMAINS')) {
     $api->setCache(new FileCache($config));
 }
-if (getenv('TOO\_MANY\_REQUESTS\_TIME\_WAIT')) {
-    $api->setWaiter(new TooManyRequestsWaiter((int) getenv('TOO\_MANY\_REQUESTS\_TIME\_WAIT')));
+if (getenv('TOO_MANY_REQUESTS_TIME_WAIT')) {
+    $api->setWaiter(new TooManyRequestsWaiter((int) getenv('TOO_MANY_REQUESTS_TIME_WAIT')));
 }
 $notifier = (function (): \Hitrov\Interfaces\NotifierInterface {
-    /\*
-     \* if you have own [https://core.telegram.org/bots](https://core.telegram.org/bots)
-     \* and set TELEGRAM\_BOT\_API\_KEY and your TELEGRAM\_USER\_ID in .env
-     \*
-     \* then you can get notified when script will succeed.
-     \* otherwise - don't mind OR develop you own NotifierInterface
-     \* to e.g. send SMS or email.
-     \*/
+    /*
+     * if you have own https://core.telegram.org/bots
+     * and set TELEGRAM_BOT_API_KEY and your TELEGRAM_USER_ID in .env
+     *
+     * then you can get notified when script will succeed.
+     * otherwise - don't mind OR develop you own NotifierInterface
+     * to e.g. send SMS or email.
+     */
     return new \Hitrov\Notification\Telegram();
 })();
 
-$shape = getenv('OCI\_SHAPE');
+$shape = getenv('OCI_SHAPE');
 
 $maxRunningInstancesOfThatShape = 1;
-if (getenv('OCI\_MAX\_INSTANCES') !== false) {
-    $maxRunningInstancesOfThatShape = (int) getenv('OCI\_MAX\_INSTANCES');
+if (getenv('OCI_MAX_INSTANCES') !== false) {
+    $maxRunningInstancesOfThatShape = (int) getenv('OCI_MAX_INSTANCES');
 }
 
 $instances = $api->getInstances($config);
@@ -80,7 +80,7 @@ if ($existingInstances) {
 }
 
 if (!empty($config->availabilityDomains)) {
-    if (is\_array($config->availabilityDomains)) {
+    if (is_array($config->availabilityDomains)) {
         $availabilityDomains = $config->availabilityDomains;
     } else {
         $availabilityDomains = [ $config->availabilityDomains ];
@@ -90,9 +90,9 @@ if (!empty($config->availabilityDomains)) {
 }
 
 foreach ($availabilityDomains as $availabilityDomainEntity) {
-    $availabilityDomain = is\_array($availabilityDomainEntity) ? $availabilityDomainEntity['name'] : $availabilityDomainEntity;
+    $availabilityDomain = is_array($availabilityDomainEntity) ? $availabilityDomainEntity['name'] : $availabilityDomainEntity;
     try {
-        $instanceDetails = $api->createInstance($config, $shape, getenv('OCI\_SSH\_PUBLIC\_KEY'), $availabilityDomain);
+        $instanceDetails = $api->createInstance($config, $shape, getenv('OCI_SSH_PUBLIC_KEY'), $availabilityDomain);
     } catch(ApiCallException $e) {
         $message = $e->getMessage();
         echo "$message\n";
@@ -115,7 +115,7 @@ foreach ($availabilityDomains as $availabilityDomainEntity) {
     }
 
     // success
-    $message = json\_encode($instanceDetails, JSON\_PRETTY\_PRINT);
+    $message = json_encode($instanceDetails, JSON_PRETTY_PRINT);
     echo "$message\n";
     if ($notifier->isSupported()) {
         $notifier->notify($message);

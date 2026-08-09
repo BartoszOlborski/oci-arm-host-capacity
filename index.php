@@ -68,43 +68,86 @@ if (getenv('OCI_MAX_INSTANCES') !== false) {
 
 echo "OCI ARM Host Capacity Bot started.\n";
 echo "Shape: {$shape}\n";
-echo "Bot will keep trying until successful.\n\n";
+echo "Running continuously until success or manual stop.\n\n";
 
 while (true) {
 
-    echo "\n=== NOWA RUNDA ===\n";
+    echo "========================================\n";
+    echo "NEW ROUND\n";
+    echo "========================================\n";
 
-    $instances = $api->getInstances($config);
+    /*
+     * Check existing instances.
+     */
+    try {
 
-    $existingInstances = $api->checkExistingInstances(
-        $config,
-        $instances,
-        $shape,
-        $maxRunningInstancesOfThatShape
-    );
+        $instances = $api->getInstances($config);
 
-    if ($existingInstances) {
-        echo "$existingInstances\n";
-        return;
-    }
+        $existingInstances = $api->checkExistingInstances(
+            $config,
+            $instances,
+            $shape,
+            $maxRunningInstancesOfThatShape
+        );
 
-    if (!empty($config->availabilityDomains)) {
-        if (is_array($config->availabilityDomains)) {
-            $availabilityDomains = $config->availabilityDomains;
-        } else {
-            $availabilityDomains = [$config->availabilityDomains];
+        if ($existingInstances) {
+            echo $existingInstances . "\n";
+            echo "Instance already exists. Stopping.\n";
+            exit(0);
         }
-    } else {
-        $availabilityDomains = $api->getAvailabilityDomains($config);
+
+    } catch (\Throwable $e) {
+
+        echo "Error checking existing instances:\n";
+        echo $e->getMessage() . "\n";
+        echo "Continuing...\n";
     }
 
+    /*
+     * Get Availability Domains.
+     */
+    try {
+
+        if (!empty($config->availabilityDomains)) {
+
+            if (is_array($config->availabilityDomains)) {
+                $availabilityDomains = $config->availabilityDomains;
+            } else {
+                $availabilityDomains = [
+                    $config->availabilityDomains
+                ];
+            }
+
+        } else {
+
+            $availabilityDomains =
+                $api->getAvailabilityDomains($config);
+        }
+
+    } catch (\Throwable $e) {
+
+        echo "Error getting Availability Domains:\n";
+        echo $e->getMessage() . "\n";
+        echo "Waiting 30 seconds...\n";
+
+        sleep(30);
+
+        continue;
+    }
+
+    /*
+     * Try every Availability Domain.
+     */
     foreach ($availabilityDomains as $availabilityDomainEntity) {
 
-        $availabilityDomain = is_array($availabilityDomainEntity)
-            ? $availabilityDomainEntity['name']
-            : $availabilityDomainEntity;
+        $availabilityDomain =
+            is_array($availabilityDomainEntity)
+                ? $availabilityDomainEntity['name']
+                : $availabilityDomainEntity;
 
-        echo "Próba: {$availabilityDomain}\n";
+        echo "\n";
+        echo "Trying Availability Domain:\n";
+        echo $availabilityDomain . "\n";
 
         try {
 
@@ -119,46 +162,64 @@ while (true) {
 
             $message = $e->getMessage();
 
-            echo "$message\n";
+            echo $message . "\n";
 
+            /*
+             * Out of host capacity:
+             * try the next Availability Domain.
+             */
             if (
                 $e->getCode() === 500 &&
                 strpos($message, 'InternalError') !== false &&
                 strpos($message, 'Out of host capacity') !== false
             ) {
 
-                echo "Brak capacity. Następny AD...\n";
+                echo "No host capacity in ";
+                echo $availabilityDomain . ".\n";
 
                 sleep(16);
 
                 continue;
             }
 
-            echo "Inny błąd OCI. Kończę.\n";
+            /*
+             * Other OCI error.
+             */
+            echo "Unexpected OCI error. Stopping.\n";
 
-            return;
+            exit(1);
         }
 
+        /*
+         * Instance successfully created.
+         */
         $message = json_encode(
             $instanceDetails,
             JSON_PRETTY_PRINT
         );
 
-        echo "=== SUKCES ===\n";
-        echo "$message\n";
+        echo "\n";
+        echo "========================================\n";
+        echo "SUCCESS - INSTANCE CREATED\n";
+        echo "========================================\n";
+        echo $message . "\n";
 
         if ($notifier->isSupported()) {
             $notifier->notify($message);
         }
 
-        return;
+        exit(0);
     }
 
-    echo "\nWszystkie AD sprawdzone.\n";
-    echo "Brak capacity.\n";
-    echo "Czekam 30 sekund i próbuję ponownie.\n";
+    /*
+     * All Availability Domains were checked.
+     */
+    echo "\n";
+    echo "All Availability Domains checked.\n";
+    echo "No host capacity available.\n";
+    echo "Waiting 30 seconds before next round...\n";
+    echo "\n";
 
     sleep(30);
 }
-    sleep(30);
-}
+```

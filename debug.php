@@ -5,10 +5,11 @@ use Hitrov\OciConfig;
 use Hitrov\OciApi;
 
 $imageId = 'ocid1.image.oc1.eu-frankfurt-1.aaaaaaaau32lbb2sdrgpxsivv3esw52oepvxq6ef625a5hhml6247cchftka';
+$availabilityDomain = 'EU-FRANKFURT-1-AD-1';
 
 try {
-    // Oficjalna kolejność Hitrov\OciConfig:
-    // 1: region, 2: userId, 3: keyFingerprint, 4: privateKeyFilename, 5: tenancyId, 6: subnetId, 7: imageId, 8: availabilityDomain (opcjonalne)
+    // 8 wymaganych parametrów w poprawnej kolejności:
+    // 1: region, 2: userId, 3: keyFingerprint, 4: privateKeyFilename, 5: tenancyId, 6: subnetId, 7: imageId, 8: availabilityDomain
     $config = new OciConfig(
         getenv('OCI_REGION'),
         getenv('OCI_USER_ID'),
@@ -16,7 +17,8 @@ try {
         getenv('OCI_PRIVATE_KEY_FILENAME'),
         getenv('OCI_TENANCY_ID'),
         getenv('OCI_SUBNET_ID'),
-        $imageId
+        $imageId,
+        $availabilityDomain
     );
 } catch (\Throwable $e) {
     echo "BŁĄD TWORZENIA KONFIGURACJI: " . $e->getMessage() . "\n";
